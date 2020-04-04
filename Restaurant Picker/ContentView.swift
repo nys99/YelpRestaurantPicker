@@ -19,10 +19,12 @@ struct ContentView: View {
                 Text("Welcome to the Restaurant Picker!")
                     .font(.largeTitle)
                     .multilineTextAlignment(.center)
+                
                 Text("you indecisive shmuck :)")
                     .font(.body)
                     .multilineTextAlignment(.center)
                     .padding(.bottom, 20)
+                
                 NavigationLink(destination: FilterView()) {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.gray)

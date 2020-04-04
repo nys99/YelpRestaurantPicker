@@ -15,7 +15,7 @@ final class YelpService {
     let METERS_IN_MILE: Int = 1609
         
     // returns list of num_res restuarants, in price category price, and distance radius (in miles) from cur location
-    func getRestuarants(lat: Double, long: Double, price: Int, distance: Int, est_type: Int, meal_type: Int, search_text: String, completion: @escaping ([CDYelpBusiness]?) -> Void)  {
+    func getRestuarants(lat: Double, long: Double, price: Int, distance: Int, est_type: Int, meal_type: Int, search_text: String, eating_time: Date, completion: @escaping ([CDYelpBusiness]?) -> Void)  {
         // TODO change to select multiple
         var prices: [CDYelpPriceTier] = [];
         if (price == 0) {
@@ -44,21 +44,28 @@ final class YelpService {
         
         // establishment type
         var query = ""
+        var categoires: [String] = []
         if (est_type == 0) {
             // restaurant, append the meal type
-            query.append(FilterView.meals[meal_type])
+            if (FilterView.meals[meal_type] == "Breakfast") {
+                categoires.append("breakfast_brunch")
+            } else {
+                query.append(FilterView.meals[meal_type])
+                categoires.append("restaurants")
+                categoires.append("food")
+            }
         } else if (est_type == 1) {
             // not rest, so append establishment type (bar)
             query.append(FilterView.establishments[est_type])
+            categoires.append("nightlife")
         } else {
             // search
             query.append(search_text)
         }
         
+        
         var businesses: [CDYelpBusiness] = []
-        print (lat)
-        print (long)
-        print (distance_in_meters)
+        // make call to the yelp api
         YelpClient.shared.apiClient.searchBusinesses(byTerm: query,
                                         location: nil,
                                         latitude: lat,
@@ -66,16 +73,18 @@ final class YelpService {
                                         radius: distance_in_meters,
                                         categories: nil,
                                         locale: nil,
-                                        limit: 20,
+                                        limit: 50,
                                         offset: nil,
                                         sortBy: .bestMatch,
                                         priceTiers: prices,
                                         openNow: nil, // TODO change these
-                                        openAt: nil,
+                                        openAt: Int(eating_time.timeIntervalSince1970), // Filter by open at time
                                         attributes: nil) { (response) in
                                             if let response = response {
-                                                // do something clever here?
                                                 businesses = response.businesses!
+                                                // shuffle the results and pick 15 at random
+                                                businesses.shuffle()
+                                                businesses = Array(businesses.prefix(15))
                                             } else {
                                                 print("Search Bus failed")
                                             }
@@ -96,5 +105,33 @@ final class YelpService {
             }
             completion(photos)
         }
+    }
+    
+    // get autocomplete results
+    func getAutocomplete(text: String, lat: Double, long: Double, completion: @escaping ([String]?) -> Void) {
+        var res: [String] = []
+        YelpClient.shared.apiClient.autocompleteBusinesses(byText: text, latitude: lat, longitude: long, locale: nil, completion: { (response) in
+            if let response = response {
+                // append terms
+                var index = 0
+                while index < 3 && index < response.terms!.count {
+                    res.append(response.terms![index].text!)
+                    index += 1
+                }
+                // append businesses
+                index = 0
+                while index < 3 && index < response.businesses!.count {
+                    res.append(response.businesses![index].name!)
+                    index += 1
+                }
+                // append categories
+                index = 0
+                while index < 3 && index < response.categories!.count {
+                    res.append(response.categories![index].title!)
+                    index += 1
+                }
+            }
+            completion(res)
+        })
     }
 }

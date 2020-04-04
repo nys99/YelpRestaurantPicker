@@ -19,6 +19,7 @@ struct PickerView: View {
     @Binding var establishment_type: Int
     @Binding var meal_type: Int
     @Binding var search_text: String
+    @Binding var eating_time: Date
     
     // used for tracking the restuarant picks
     @State var index1: Int = 0
@@ -131,7 +132,7 @@ struct PickerView: View {
             
             // make the call to the yelp API to get restuarant data
             let ys = YelpService()
-            ys.getRestuarants(lat: lat, long: long, price: self.price, distance: self.distance, est_type: self.establishment_type, meal_type: self.meal_type, search_text: self.search_text, completion: { response in
+            ys.getRestuarants(lat: lat, long: long, price: self.price, distance: self.distance, est_type: self.establishment_type, meal_type: self.meal_type, search_text: self.search_text, eating_time: self.eating_time, completion: { response in
                 self.rests = response!
             })
             
